@@ -1,0 +1,165 @@
+/* ----- Global ----- */
+body {
+  background-color: #000;
+  color: #00ff00;
+  font-family: "Courier New", Courier, monospace;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 960px;
+  margin: auto;
+  padding: 2rem;
+}
+
+/* ----- Header ----- */
+h1 {
+  text-align: center;
+  color: #00ff00;
+  text-shadow: 0 0 10px #00ff00;
+}
+
+/* ----- Button ----- */
+button {
+  display: block;
+  margin: 1rem auto;
+  padding: 0.7rem 1.5rem;
+  font-size: 1rem;
+  background-color: #001100;
+  color: #00ff00;
+  border: 1px solid #00ff00;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+}
+
+button:hover:not(:disabled) {
+  background-color: #002200;
+  transform: scale(1.05);
+}
+
+button:disabled {
+  background-color: #000;
+  color: #007700;
+  border-color: #007700;
+  cursor: not-allowed;
+}
+
+/* ----- Select Dropdown ----- */
+label {
+  display: block;
+  text-align: center;
+  font-size: 1rem;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+select {
+  display: block;
+  margin: 0 auto 1rem;
+  padding: 0.5rem 1rem;
+  background-color: #001100;
+  color: #00ff00;
+  border: 1px solid #00ff00;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+select option {
+  background-color: #000;
+  color: #00ff00;
+}
+
+/* ----- Table ----- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  background-color: #000;
+  color: #00ff00;
+  box-shadow: 0 0 10px #00ff00;
+  border: 1px solid #00ff00;
+}
+
+thead {
+  background-color: #001100;
+  border-bottom: 2px solid #00ff00;
+}
+
+th, td {
+  padding: 0.8rem;
+  text-align: left;
+  border-bottom: 1px solid #005500;
+  vertical-align: top;
+}
+
+tr:hover {
+  background-color: #002200;
+}
+
+.client-signal {
+  color: #33ff33;
+  font-size: 0.9em;
+}
+
+ul {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+/* ----- Progress Bar ----- */
+#progressBarContainer {
+  width: 100%;
+  background-color: #003300;
+  border: 1px solid #00ff00;
+  border-radius: 4px;
+  height: 20px;
+  margin-top: 1rem;
+  overflow: hidden;
+  display: none;
+  box-shadow: 0 0 10px #00ff00 inset;
+}
+
+#progressBar {
+  height: 100%;
+  width: 0%;
+  background-color: #00ff00;
+  transition: width 0.1s linear;
+}
+
+/* Groupement centré du label + select + bouton */
+.control-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+label {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  color: #00ff00;
+  text-align: center;
+}
+
+/* Menu déroulant (select) en style terminal */
+select {
+  background-color: #001100;
+  color: #00ff00;
+  border: 1px solid #00ff00;
+  border-radius: 4px;
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  font-family: 'Courier New', monospace;
+  text-align: center;
+  cursor: pointer;
+}
+
+select option {
+  background-color: #000;
+  color: #00ff00;
+}
