@@ -42,11 +42,13 @@ def scan_wifi(timeout=10, iface="wlan0"):
                 bssid = row[0].strip()
                 signal = int(row[8].strip()) if row[8].strip().lstrip('-').isdigit() else -100
                 channel = int(row[3].strip()) if row[3].strip().isdigit() else -1
+                security = row[5].strip()
                 essid = row[13].strip()
                 vendor = get_mac_vendor(bssid)
                 ap_entry = {
                     "SSID": essid if essid else "<Hidden>",
                     "BSSID": bssid,
+                    "Security": security,
                     "Vendor": vendor,
                     "Signal": signal,
                     "Channel": channel,

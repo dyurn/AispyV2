@@ -3,30 +3,34 @@ let wifiChart = null;
 function updateWifiChart(data) {
   const ctx = document.getElementById("wifiChart").getContext("2d");
 
-  // Détruire l'ancien graphique s'il existe
   if (wifiChart) {
     wifiChart.destroy();
   }
 
-  const datasets = data.map((ap, i) => {
-    const channel = ap.Channel;
-    const signal = ap.Signal;
-
-    // Génère une "courbe" en cloche centrée sur le canal
+  // Fonction pour générer une courbe de type cloche
+  function generateGaussian(center, strength) {
     const points = [];
     for (let ch = 1; ch <= 13; ch++) {
-      const distance = Math.abs(ch - channel);
-      const strength = signal - distance * 10; // forme de cloche simple
-      points.push({ x: ch, y: strength });
+      const distance = ch - center;
+      const value = strength - Math.pow(distance * 2, 2); // parabole douce
+      points.push({ x: ch, y: Math.max(value, -100) });
     }
+    return points;
+  }
+
+  const datasets = data.map((ap, i) => {
+    const label = ap.SSID === "<Hidden>" ? `Hidden #${i + 1}` : ap.SSID;
+    const colorHue = (i * 45) % 360;
+    const baseColor = `hsl(${colorHue}, 100%, 50%)`;
 
     return {
-      label: ap.SSID || "<Hidden>",
-      data: points,
+      label: label,
+      data: generateGaussian(ap.Channel, ap.Signal),
       fill: true,
       tension: 0.4,
-      borderColor: `hsl(${(i * 60) % 360}, 100%, 50%)`,
-      backgroundColor: `hsla(${(i * 60) % 360}, 100%, 50%, 0.2)`,
+      borderColor: baseColor,
+      backgroundColor: `hsla(${colorHue}, 100%, 50%, 0.2)`,
+      pointRadius: 0,
     };
   });
 
@@ -40,7 +44,6 @@ function updateWifiChart(data) {
       plugins: {
         title: {
           display: true,
-          text: 'Wi-Fi Signal Strength by Channel',
           color: '#00ff00',
           font: {
             family: 'Courier New',
@@ -51,7 +54,8 @@ function updateWifiChart(data) {
           labels: {
             color: '#00ff00',
             font: {
-              family: 'Courier New'
+              family: 'Courier New',
+              size: 12
             }
           }
         }
@@ -67,7 +71,11 @@ function updateWifiChart(data) {
             color: '#00ff00'
           },
           ticks: {
+            stepSize: 1,
             color: '#00ff00'
+          },
+          grid: {
+            color: '#003300'
           }
         },
         y: {
@@ -80,6 +88,9 @@ function updateWifiChart(data) {
           },
           ticks: {
             color: '#00ff00'
+          },
+          grid: {
+            color: '#003300'
           }
         }
       }
@@ -87,21 +98,30 @@ function updateWifiChart(data) {
   });
 }
 
-
 async function loadInterfaces() {
   const select = document.getElementById("ifaceSelect");
+  const button = document.querySelector("button"); // bouton Scan
+
   try {
     const res = await fetch("/api/interfaces");
     const interfaces = await res.json();
+
     if (interfaces.length === 0) {
-      select.innerHTML = `<option disabled>No Wi-Fi interfaces found</option>`;
+      select.innerHTML = `<option disabled selected>No iface</option>`;
+      button.disabled = true;
+      button.title = "No wireless interfaces available";
     } else {
       select.innerHTML = interfaces.map(iface => `<option value="${iface}">${iface}</option>`).join("");
+      button.disabled = false;
+      button.title = "";
     }
   } catch (err) {
-    select.innerHTML = `<option disabled>Error loading interfaces</option>`;
+    select.innerHTML = `<option disabled selected>Error loading interfaces</option>`;
+    button.disabled = true;
+    button.title = "Error while loading interfaces";
   }
 }
+
 
 // Appelle au chargement de la page
 window.addEventListener("DOMContentLoaded", loadInterfaces);
@@ -124,7 +144,7 @@ async function scanWifi() {
 
   let progress = 0;
   const interval = 100; // ms
-  const maxDuration = 15000; // 15 seconds max in case of long scan
+  const maxDuration = 30000; // 15 seconds max in case of long scan
   const startTime = Date.now();
 
   // Animate the bar
@@ -150,6 +170,7 @@ async function scanWifi() {
           <th>SSID</th>
           <th>BSSID</th>
           <th>Vendor</th>
+          <th>Security</th>
           <th>Signal</th>
           <th>Channel</th>
           <th>Associated Clients</th>
@@ -160,13 +181,24 @@ async function scanWifi() {
     for (const ap of data) {
       let clientDetails = "None";
       if (ap.Clients.length > 0) {
-        clientDetails = `<ul>` + ap.Clients.map(c => `<li>${c.Station} <span class="client-signal">(${c.Signal} dBm)</span></li>`).join("") + `</ul>`;
+        clientDetails = `<ul>` + ap.Clients.map(c => `
+  <li>
+    ${c.Station} <span class="client-signal">(${c.Signal} dBm)</span> | probes ${c.Vendor}
+    <button class="deauth-btn" 
+            data-bssid="${ap.BSSID}" 
+            data-station="${c.Station}"
+            data-channel="${ap.Channel}">
+      Deauth
+    </button>
+  </li>
+`).join("") + `</ul>`;
       }
 
       html += `<tr>
         <td>${ap.SSID}</td>
         <td>${ap.BSSID}</td>
         <td>${ap.Vendor}</td>
+        <td>${ap.Security}</td>
         <td>${ap.Signal} dBm</td>
         <td>${ap.Channel}</td>
         <td>${clientDetails}</td>
@@ -175,6 +207,39 @@ async function scanWifi() {
 
     html += `</tbody></table>`;
     resultsDiv.innerHTML = html;
+
+    document.querySelectorAll(".deauth-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+    const bssid = btn.dataset.bssid;
+    const station = btn.dataset.station;
+    const channel = btn.dataset.channel;
+    console.log(channel)
+    const iface = document.getElementById("ifaceSelect").value;
+
+    const confirmDeauth = confirm(`Deauth ${station} from ${bssid} via ${iface}?`);
+    if (!confirmDeauth) return;
+
+    btn.disabled = true;
+    btn.textContent = "Sending...";
+
+    try {
+      const res = await fetch("/api/deauth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bssid, station, iface, channel })
+      });
+
+      const result = await res.json();
+      alert(result.message || "Deauth sent.");
+    } catch (err) {
+      alert("Error during deauth.");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Deauth";
+    }
+  });
+});
+
 
     updateWifiChart(data);
 
