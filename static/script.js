@@ -184,14 +184,17 @@ async function scanWifi() {
         clientDetails = `<ul>` + ap.Clients.map(c => `
   <li>
     ${c.Station} <span class="client-signal">(${c.Signal} dBm)</span> | probes ${c.Vendor}
-    <button class="deauth-btn" 
-            data-bssid="${ap.BSSID}" 
-            data-station="${c.Station}"
-            data-channel="${ap.Channel}">
-      Deauth
-    </button>
+    <label class="switch">
+      <input type="checkbox" 
+             class="deauth-toggle" 
+             data-bssid="${ap.BSSID}" 
+             data-station="${c.Station}" 
+             data-channel="${ap.Channel}">
+      <span class="slider"></span>
+    </label> <span class="deauth-label">DEAUTH</span>
   </li>
 `).join("") + `</ul>`;
+
       }
 
       html += `<tr>
@@ -208,34 +211,26 @@ async function scanWifi() {
     html += `</tbody></table>`;
     resultsDiv.innerHTML = html;
 
-    document.querySelectorAll(".deauth-btn").forEach(btn => {
-    btn.addEventListener("click", async () => {
-    const bssid = btn.dataset.bssid;
-    const station = btn.dataset.station;
-    const channel = btn.dataset.channel;
-    console.log(channel)
+    document.querySelectorAll(".deauth-toggle").forEach(toggle => {
+  toggle.addEventListener("change", async () => {
+    const checked = toggle.checked;
+    const bssid = toggle.dataset.bssid;
+    const station = toggle.dataset.station;
+    const channel = toggle.dataset.channel;
     const iface = document.getElementById("ifaceSelect").value;
 
-    const confirmDeauth = confirm(`Deauth ${station} from ${bssid} via ${iface}?`);
-    if (!confirmDeauth) return;
-
-    btn.disabled = true;
-    btn.textContent = "Sending...";
-
     try {
-      const res = await fetch("/api/deauth", {
+      const res = await fetch("/api/deauth-toggle", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bssid, station, iface, channel })
+        body: JSON.stringify({ bssid, station, channel, iface, active: checked })
       });
 
       const result = await res.json();
-      alert(result.message || "Deauth sent.");
+      console.log(result.message);
     } catch (err) {
-      alert("Error during deauth.");
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "Deauth";
+      alert("Error toggling deauth.");
+      toggle.checked = false;
     }
   });
 });
