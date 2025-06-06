@@ -2,6 +2,8 @@
 
 A minimalist web interface to scan Wi-Fi networks, display connected clients, and deauth.
 
+![Screenshot of interface](assets/screen.png)
+
 ## Launch
 
 ```bash
