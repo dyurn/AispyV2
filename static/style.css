@@ -1,6 +1,6 @@
 :root {
   --green: #00ff00;
-  --theme: #3bac4e;
+  --theme: #00ff00;
 }
 
 /* ----- Global ----- */
@@ -22,6 +22,7 @@ body {
 #title {
   text-align: center;
   color: var(--theme);
+  font-size: 3.5em; 
   margin-bottom: 0.2em;
   text-shadow: 0 0 10px var(--theme);
 }

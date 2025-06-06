@@ -183,7 +183,8 @@ async function scanWifi() {
       if (ap.Clients.length > 0) {
         clientDetails = `<ul>` + ap.Clients.map(c => `
   <li>
-    ${c.Station} <span class="client-signal">(${c.Signal} dBm)</span> | probes ${c.Vendor}
+    ${c.Station} <span class="client-signal">(${c.Signal} dBm)</span> | ${c.Vendor}
+    <br>
     <label class="switch">
       <input type="checkbox" 
              class="deauth-toggle" 

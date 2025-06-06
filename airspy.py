@@ -1,5 +1,6 @@
 from flask import Flask, render_template, jsonify, request
 import subprocess
+import argparse
 from scanner import scan_wifi
 
 TIME = 30
@@ -86,7 +87,12 @@ def list_wifi_interfaces():
         return jsonify([])
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    parser = argparse.ArgumentParser(description="Airspy Web Server")
+    parser.add_argument("port", type=int, nargs="?", default=5000,
+                        help="Port to run the web server on (default: 5000)")
+    args = parser.parse_args()
+
+    app.run(host="0.0.0.0", port=args.port, debug=True)
 
 
 #iwconfig wlan0 channel 2
